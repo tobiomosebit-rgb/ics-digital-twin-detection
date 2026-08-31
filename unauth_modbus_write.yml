@@ -1,0 +1,31 @@
+title: Unauthorized Modbus Write From Non-PLC Source
+id: 255f20d6-0cba-47eb-a00f-681a1f940caf
+status: experimental
+description: >
+  Detects Modbus write-function requests originating from a source host
+  other than the authorised PLC (192.168.95.2). In the GRFICS testbed the
+  only legitimate Modbus master is the PLC; write requests from any other
+  host indicate an unauthorised command (e.g. a compromised engineering
+  workstation). Matches requests only (pdu_type REQ) to exclude device
+  response traffic.
+references:
+  - https://attack.mitre.org/techniques/T0836/
+author: David Oluwatobi Omosebi
+date: 2026/06/29
+logsource:
+  product: zeek
+  service: modbus
+detection:
+  selection_write:
+    func|startswith: 'WRITE_'
+    pdu_type: 'REQ'
+  filter_legit_plc:
+    id.orig_h: '192.168.95.2'
+  condition: selection_write and not filter_legit_plc
+falsepositives:
+  - Legitimate engineering changes made directly from an authorised workstation
+  - Additional Modbus masters not accounted for in the asset inventory
+level: high
+tags:
+  - attack.t0836
+  - attack.impair_process_control

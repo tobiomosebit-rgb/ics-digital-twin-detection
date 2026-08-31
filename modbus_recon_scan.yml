@@ -1,0 +1,37 @@
+title: Modbus Reconnaissance Scan From Non-PLC Source
+id: 32bc1c42-098b-4036-b2d2-fce419e5ce1e
+status: experimental
+description: >
+  Detects Modbus read requests originating from a source other than the
+  authorised PLC (192.168.95.2). A non-PLC host issuing read requests to
+  field devices indicates enumeration of the ICS network. The reconnaissance
+  signature is the fan-out of one source across multiple devices in a short
+  window; this rule flags the non-PLC read condition, with the multi-device
+  aggregation applied at the correlation/SIEM layer. Matches requests only
+  (pdu_type REQ) to exclude device response traffic.
+references:
+  - https://attack.mitre.org/techniques/T0846/
+author: David Oluwatobi Omosebi
+date: 2026/06/29
+logsource:
+  product: zeek
+  service: modbus
+detection:
+  selection_read:
+    func|startswith: 'READ_'
+    pdu_type: 'REQ'
+  filter_legit_plc:
+    id.orig_h: '192.168.95.2'
+  condition: selection_read and not filter_legit_plc
+  timeframe: 60s
+fields:
+  - id.orig_h
+  - id.resp_h
+  - func
+falsepositives:
+  - Authorised asset-discovery or polling tools run from a management host
+  - Engineering diagnostics reading device registers
+level: medium
+tags:
+  - attack.t0846
+  - attack.discovery

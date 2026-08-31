@@ -1,0 +1,36 @@
+title: Modbus Denial of Service Flood From Non-PLC Source
+id: f818dce7-58ea-4b0c-9b53-ed540d0ae165
+status: experimental
+description: >
+  Detects a high-rate burst of Modbus requests from a source other than the
+  authorised PLC (192.168.95.2), consistent with a denial-of-service attempt
+  that floods a field device and starves legitimate polling. The PLC operates
+  at a modest steady cadence; a non-PLC source exceeding a request-rate
+  threshold within a short window indicates flooding. Rate threshold and
+  per-source counting are applied at the correlation/SIEM layer; this rule
+  expresses the per-event condition.
+references:
+  - https://attack.mitre.org/techniques/T0814/
+author: David Oluwatobi Omosebi
+date: 2026/06/30
+logsource:
+  product: zeek
+  service: modbus
+detection:
+  selection_req:
+    pdu_type: 'REQ'
+  filter_legit_plc:
+    id.orig_h: '192.168.95.2'
+  condition: selection_req and not filter_legit_plc
+  timeframe: 10s
+fields:
+  - id.orig_h
+  - id.resp_h
+  - func
+falsepositives:
+  - Authorised high-frequency polling or diagnostics from a known host
+  - Bulk engineering operations from an authorised workstation
+level: high
+tags:
+  - attack.t0814
+  - attack.inhibit_response_function
